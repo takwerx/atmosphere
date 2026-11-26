@@ -165,6 +165,10 @@
     <string name="quakes_allow_text">Atmosphere will ask the USGS for its feed of recent earthquakes, worldwide, and for the shaking maps of the largest, and draw them on the map. Your position is not sent.\n\nServer: earthquake.usgs.gov</string>
     <string name="credit_quakes">Earthquakes and ShakeMaps from the USGS Earthquake Hazards Program (%1$s)</string>
     <string name="quakes_floor_heading">Magnitude</string>
+    <string name="plates_heading">Context</string>
+    <string name="plates_on">Plate boundaries ON</string>
+    <string name="plates_off">Plate boundaries OFF</string>
+    <string name="credit_plates">Plate boundaries from the PB2002 model (Peter Bird, 2003), via the GeoJSON conversion at github.com/fraxen/tectonicplates (ODC-By 1.0), bundled with the plugin</string>
     <string name="fuel_on">Fuel Moisture ON</string>
     <string name="fuel_off">Fuel Moisture OFF</string>
     <string name="fuel_allow_title">Show fuel moisture samples?</string>

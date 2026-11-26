@@ -3283,6 +3283,30 @@
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="6dp"
                     android:orientation="vertical" />
+
+                <TextView
+                    style="@style/TakwerxSectionHeading"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="@string/plates_heading" />
+
+                <Button
+                    android:id="@+id/plates_toggle"
+                    android:gravity="left|center_vertical"
+                    style="@style/TakwerxButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="@string/plates_off" />
+
+                <LinearLayout
+                    android:id="@+id/plates_legend"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="6dp"
+                    android:orientation="vertical"
+                    android:visibility="gone" />
             </LinearLayout>
         </LinearLayout>
 
