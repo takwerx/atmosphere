@@ -330,6 +330,8 @@ public final class AtmospherePane {
     private final LinearLayout quakesLegend;
     private final LinearLayout quakesDayRow;
     private final LinearLayout quakesChoiceRow;
+    private final Button platesToggle;
+    private final LinearLayout platesLegend;
     private QuakesOverlay quakes;
     private boolean quakesOpen = true;
     private static final String PREF_FUEL_OPEN = "weather.fuel.open";
@@ -996,6 +998,8 @@ public final class AtmospherePane {
         quakesLegend = find(R.id.quakes_legend);
         quakesDayRow = find(R.id.quakes_day_row);
         quakesChoiceRow = find(R.id.quakes_choice_row);
+        platesToggle = find(R.id.plates_toggle);
+        platesLegend = find(R.id.plates_legend);
         fuelSettings = find(R.id.fuel_settings);
         fuelExpand = find(R.id.fuel_expand);
         fuelToggle = find(R.id.fuel_toggle);
@@ -2663,6 +2667,9 @@ public final class AtmospherePane {
         quakesLegend.removeAllViews();
         for (String[] row : QuakesOverlay.LEGEND)
             quakesLegend.addView(legendLine(row[0], Integer.parseInt(row[1])));
+        platesLegend.removeAllViews();
+        for (String[] row : QuakesOverlay.PLATES_LEGEND)
+            platesLegend.addView(legendLine(row[0], Integer.parseInt(row[1])));
         buildDayRow(quakesDayRow, quakes);
         buildChoiceRow(quakesChoiceRow, quakes);
         updateLayerControls();
@@ -3351,6 +3358,16 @@ public final class AtmospherePane {
                 } else {
                     askToAllowQuakes();
                 }
+            }
+        });
+        platesToggle.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // Bundled data: nothing leaves the device, so no host to allow.
+                if (quakes == null)
+                    return;
+                quakes.setPlatesOn(!quakes.platesOn());
+                updateLayerControls();
             }
         });
         fuelToggle.setOnClickListener(new View.OnClickListener() {
@@ -6880,6 +6897,11 @@ public final class AtmospherePane {
         quakesExpand.setVisibility(quakesOn ? View.VISIBLE : View.GONE);
         quakesExpand.setRotation(quakesOpen ? 180f : 0f);
         quakesSettings.setVisibility(quakesOn && quakesOpen ? View.VISIBLE : View.GONE);
+        final boolean platesOn = quakes != null && quakes.platesOn();
+        platesToggle.setText(platesOn ? R.string.plates_on : R.string.plates_off);
+        platesToggle.setTextColor(pluginContext.getResources().getColor(
+                platesOn ? R.color.state_on : R.color.state_off));
+        platesLegend.setVisibility(platesOn ? View.VISIBLE : View.GONE);
         final boolean fuelOn = fuel != null && fuel.isOn();
         fuelToggle.setText(fuelOn ? R.string.fuel_on : R.string.fuel_off);
         fuelToggle.setTextColor(pluginContext.getResources().getColor(
@@ -7066,6 +7088,8 @@ public final class AtmospherePane {
             if (out.length() > 0)
                 out.append('\n');
             out.append(pluginContext.getString(R.string.credit_quakes, QuakesOverlay.HOST));
+            if (quakes.platesOn())
+                out.append('\n').append(pluginContext.getString(R.string.credit_plates));
         }
         if (fuel != null && fuel.isOn()) {
             if (out.length() > 0)

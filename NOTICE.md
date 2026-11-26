@@ -53,6 +53,16 @@ Enabling a source means accepting that provider's terms. The bundled definitions
   States government, public domain. Requires an identifying User-Agent, which the
   plugin sends.
 
+## Bundled data
+
+The tectonic plate boundaries drawn by the Earthquakes layer's **Plate boundaries**
+option are the **PB2002** model — Peter Bird, *An updated digital model of plate
+boundaries*, Geochemistry Geophysics Geosystems 4(3), 1027, 2003 — as converted to
+GeoJSON by Hugo Ahlenius at https://github.com/fraxen/tectonicplates and released
+under the Open Data Commons Attribution License (ODC-By) v1.0. The model is carried
+in the APK as `plate_boundaries.json`, reclassed by each boundary's dominant
+`STEPCLASS` and split at the antimeridian; nothing is fetched at runtime.
+
 ## Plugin scaffolding
 
 Scaffolded from the ATAK CIV SDK's `plugintemplate` sample. The SDK licence grants the

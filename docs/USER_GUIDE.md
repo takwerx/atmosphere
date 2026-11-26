@@ -496,6 +496,19 @@ minutes.
 
 <img src="screenshots/105_quake_details.png" width="420">
 
+Under **Context**, the **Plate boundaries** button draws the tectonic plates
+beneath the quakes: the PB2002 model (Peter Bird, 2003), the standard digital
+model of the plate boundaries, every boundary colored by what it does —
+subduction zones red, spreading ridges green, transform faults cyan and amber,
+convergent boundaries blue — with the plate outlines in white and the orogens,
+the regions deforming too broadly for a single line, as a faint amber wash. The
+key appears under the button while it is on. Tap a line for the plate pair, the
+boundary class and the model's source for that segment. A string of quakes along
+a boundary explains itself; a quake far from every line stands out for the same
+reason. The model is carried inside the plugin and never fetched — it is the one
+layer here that touches no network at all. Off on a new install; boundary
+positions are tens-of-kilometres honest, not survey data.
+
 ## 10. Rain Totals and Rain Gauges
 
 Both say how much rain fell, for the time you pick with the **Totals:** button

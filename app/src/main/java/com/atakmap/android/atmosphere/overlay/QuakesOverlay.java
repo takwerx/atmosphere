@@ -2,7 +2,11 @@ package com.atakmap.android.atmosphere.overlay;
 
 import android.content.Context;
 
+import android.content.SharedPreferences;
+
 import com.atakmap.android.atmosphere.compat.GeneratedFiles;
+import com.atakmap.android.atmosphere.compat.MapCompat;
+import com.atakmap.android.atmosphere.data.Plates;
 import com.atakmap.android.atmosphere.data.Quakes;
 import com.atakmap.android.atmosphere.net.EgressPolicy;
 import com.atakmap.android.maps.MapView;
@@ -41,6 +45,9 @@ public final class QuakesOverlay extends OutlookOverlay {
     private static final double SHAKEMAP_MIN_MAG = 4.5;
     private static final double LABEL_MIN_MAG = -10;
 
+    /** The plates sub-layer's own preference; the layer's data never leaves the APK. */
+    private static final String PREF_PLATES = "weather.layer.quakes.plates.on";
+
     /** The key. */
     public static final String[][] LEGEND = {
             { "Past hour", String.valueOf(Quakes.AGE_COLORS[0]) },
@@ -49,15 +56,88 @@ public final class QuakesOverlay extends OutlookOverlay {
             { "Older", String.valueOf(Quakes.AGE_COLORS[3]) },
             { "Circle size: magnitude. Lines: how hard the ground shook, from the ShakeMap", "0" } };
 
+    /** The plates key, shown while the sub-layer is on. */
+    public static final String[][] PLATES_LEGEND;
+    static {
+        PLATES_LEGEND = new String[Plates.CLASSES.length + 2][];
+        for (int i = 0; i < Plates.CLASSES.length; i++)
+            PLATES_LEGEND[i] = new String[] { Plates.label(Plates.CLASSES[i]),
+                    String.valueOf(Plates.color(Plates.CLASSES[i])) };
+        PLATES_LEGEND[Plates.CLASSES.length] =
+                new String[] { "Plate outline", String.valueOf(Plates.OUTLINE_COLOR | 0xFF000000) };
+        PLATES_LEGEND[Plates.CLASSES.length + 1] =
+                new String[] { "Orogen (diffuse deformation)",
+                        String.valueOf(Plates.OROGEN_STROKE | 0xFF000000) };
+    }
+
     private final DotIcons icons;
+    private final Context pluginContext;
     private final List<String> chain = new CopyOnWriteArrayList<>();
     private volatile int window = 2;
+    /** The bundled model, read once on the worker the first time it is drawn. */
+    private volatile List<Area> plateAreas;
 
     public QuakesOverlay(MapView mapView, Context pluginContext, EgressPolicy egress) {
         super(mapView, pluginContext, egress, TAG, LAYER_ID, "Earthquakes");
+        this.pluginContext = pluginContext;
         icons = new DotIcons(GeneratedFiles.icons("dots"));
         window = day();
         chain.add(Quakes.url(window));
+    }
+
+    /** Whether the plate boundaries are drawn under the quakes. Off on a new install. */
+    public boolean platesOn() {
+        final SharedPreferences p = MapCompat.prefs();
+        return p != null && p.getBoolean(PREF_PLATES, false);
+    }
+
+    /** Turns the plate boundaries on or off; redrawn from what is held, no request. */
+    public void setPlatesOn(boolean value) {
+        if (value == platesOn())
+            return;
+        final SharedPreferences p = MapCompat.prefs();
+        if (p != null)
+            p.edit().putBoolean(PREF_PLATES, value).apply();
+        redraw();
+    }
+
+    @Override
+    protected List<Area> extraAreas() {
+        if (!platesOn())
+            return java.util.Collections.emptyList();
+        List<Area> held = plateAreas;
+        if (held == null) {
+            held = new ArrayList<>();
+            for (Plates.Feature f : Plates.load(pluginContext)) {
+                final String label;
+                final int color;
+                final StringBuilder d = new StringBuilder();
+                if (f.kind == Plates.BOUNDARY) {
+                    label = Plates.label(f.cls);
+                    color = Plates.color(f.cls);
+                    if (!f.pair.isEmpty())
+                        d.append(f.pair).append('\n');
+                    d.append("Class: ").append(label);
+                    if (!f.source.isEmpty())
+                        d.append("\nSource: ").append(f.source);
+                } else if (f.kind == Plates.OUTLINE) {
+                    label = "Plate outline";
+                    color = Plates.OUTLINE_COLOR;
+                    d.append("Plate outline");
+                } else {
+                    label = "Orogen";
+                    color = Plates.OROGEN_STROKE;
+                    d.append("Orogen: deformation spread over a region, not a single line");
+                }
+                d.append("\nModel: PB2002 (Peter Bird, 2003); boundary positions carry")
+                        .append(" tens-of-km uncertainty by nature")
+                        .append("\nFrom: github.com/fraxen/tectonicplates, bundled with the")
+                        .append(" plugin; nothing is fetched");
+                held.add(new Area(1, f.name, label, color, f.geometry, d.toString(), "", f));
+            }
+            plateAreas = held;
+        }
+        return held;
     }
 
     @Override
@@ -218,6 +298,16 @@ public final class QuakesOverlay extends OutlookOverlay {
 
     @Override
     protected AtmosphereFeatures.Drawn drawn(Area a, Geometry g, AttributeSet s) {
+        if (a.extra instanceof Plates.Feature) {
+            final Plates.Feature f = (Plates.Feature) a.extra;
+            if (f.kind == Plates.OROGEN)
+                return new AtmosphereFeatures.Drawn("Plate boundaries", a.title, g,
+                        AtmosphereFeatures.area(Plates.OROGEN_STROKE, 1f, Plates.OROGEN_FILL),
+                        s);
+            final float weight = f.kind == Plates.OUTLINE ? 1.2f : Plates.weight(f.cls);
+            return new AtmosphereFeatures.Drawn("Plate boundaries", a.title, g,
+                    AtmosphereFeatures.stroke(a.title, a.color, weight, false), s);
+        }
         if (a.extra instanceof Quakes.Quake) {
             final Quakes.Quake q = (Quakes.Quake) a.extra;
             final int dp = (int) Math.max(8, Math.min(34, Math.round(6 + 3 * q.mag)));
@@ -277,6 +367,8 @@ public final class QuakesOverlay extends OutlookOverlay {
         if (window == 4)
             b.append("\nThe month feed carries M2.5 and up only.");
         b.append("\nFrom USGS, worldwide; times are this phone's.");
+        if (platesOn())
+            b.append("\nPlate boundaries drawn from the bundled PB2002 model; nothing fetched.");
         return b.toString();
     }
 
